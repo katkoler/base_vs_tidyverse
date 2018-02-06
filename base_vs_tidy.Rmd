@@ -1,0 +1,235 @@
+---
+title: "Base vs tidyverse"
+author: "Katjusa Koler"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    df_print: paged
+editor_options:
+  chunk_output_type: inline
+---
+
+```{r include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+#Pros and cons
+
+####Base R:
+
+Pros
+
+- it is there
+- works with everything
+- works in every version of R
+
+Cons
+
+- unreadable
+- {{}}())([]])
+
+
+####Tidyverse:
+Pros
+
+* readibility
+* speed (almost always) 
+* simplicity
+* usability
+    + consistency (eg. The first formal argument is always a data frame that provides the function’s input)
+    + coverage (full workflow)
+    + help (large user community)
+    + potential to increase usability
+
+Cons
+
+* needs installing
+* integration with other packages (eg. Bioconductor)
+* dependent development (close coordination within tidyverse)
+
+https://www.tidyverse.org/ 
+https://rviews.rstudio.com/2017/06/08/what-is-the-tidyverse/ 
+
+
+##Readability with %>%
+With base R the functions are nested which means that we need to read the operations from inside out rather than in the order they are performed which using %>% "pipes" demonstrates nicely. 
+```{r}
+x <- c(0.109, 0.359, 0.63, 0.996, 0.515, 0.142, 0.017, 0.829, 0.907)
+
+# base
+round(exp(diff(log(x))), 1)
+
+# magrittr
+library(magrittr)
+x %>% log %>%
+    diff %>%
+    exp %>%
+    round(1)
+```
+
+##Looking at data
+Usually tibble displays data nicer than base R (not such a problem with notebooks), the difference is when looking at long character string. 
+
+#Example
+Modified from: http://www.onthelambda.com/2014/02/10/how-dplyr-replaced-my-most-common-r-idioms/
+
+##Data
+diamonds: A dataset containing the prices and other attributes of almost 54,000 diamonds. http://ggplot2.tidyverse.org/reference/diamonds.html 
+
+##Initial plots
+```{r}
+library(ggplot2)
+library(tidyverse)
+str(diamonds)
+
+# base
+plot(diamonds$carat, diamonds$price, col = diamonds$color,
+    pch = as.numeric(diamonds$cut))
+
+# ggplot2
+ggplot(diamonds, aes(carat, price, col = color, shape = cut)) +
+    geom_point()
+```
+
+
+
+
+
+
+
+##Filtering rows
+Again, both work well with dplyr working faster and in fewer characters. The Base R helps us with column names if we use tab completion, while with dplyr we need to know the exact column names. 
+```{r}
+# base R
+diamonds_base <- diamonds[diamonds$z > 0 & diamonds$cut != "Fair",]
+
+# dplyr
+diamonds_tdyv <- filter(diamonds,
+                        z>0,
+                        cut != "Fair")
+```
+
+##Arranging and ordering
+```{r}
+# base R
+diamonds_base <- diamonds_base[order(diamonds_base$price, 
+                                     decreasing=TRUE), ]
+# dplyr
+diamonds_tdyv <- arrange(diamonds_tdyv, desc(price))
+
+```
+
+##Selecting columns
+
+```{r}
+# base R
+names <- c(colnames(diamonds_base)[grepl("^c", colnames(diamonds_base))], "price", "x", "y", "z")
+diamonds_base <- diamonds_base[,names]
+
+# dplyr
+diamonds_tdyv <- select(diamonds_tdyv, starts_with("c"), price, x, y, z) 
+
+```
+
+##Creating new columns
+```{r}
+# base R
+diamonds_base$mass <- diamonds_base$carat * 0.2
+diamonds_base$size <- diamonds_base$x * diamonds_base$y * diamonds_base$z
+
+# dplyr
+diamonds_tdyv <- mutate(diamonds_tdyv, mass = carat * 0.2) 
+diamonds_tdyv <- mutate(diamonds_tdyv, size = x * y * z)
+
+```
+
+
+##Aggregation and summarization
+```{r}
+# base R
+summary1 <- aggregate(price ~ color,
+                      data=diamonds_base,
+                      FUN=mean)
+summary2 <- aggregate(price ~ color,
+                      data=diamonds_base,
+                      FUN=length)
+summary_diamonds_base <- merge(summary1, summary2, 
+                                 by="color")
+
+# dplyr
+by.color <- group_by(diamonds_tdyv, color)
+summary_diamonds_tdyv <- summarise(by.color,
+                                   num_color = n(),
+                                   price = mean(price))
+
+```
+
+
+##All together
+
+tidyverse really shows it's selling point here as it is much shorter and much more readable. 
+
+```{r}
+# base R
+names <- c(colnames(diamonds_base)[grepl("^c", colnames(diamonds_base))], "price", "x", "y", "z")
+diamonds_base <- diamonds[diamonds$z>0 & 
+                            diamonds$cut!="Fair", 
+                          names]
+diamonds_base <- diamonds_base[order(diamonds_base$carat, 
+                                     decreasing=TRUE), ]
+diamonds_base$mass <- diamonds_base$carat * 0.2
+diamonds_base$size <- diamonds_base$x * diamonds_base$y * diamonds_base$z
+summary1 <- aggregate(price ~ color,
+                      data=diamonds_base,
+                      FUN=mean)
+summary2 <- aggregate(price ~ color,
+                      data=diamonds_base,
+                      FUN=length)
+summary_diamonds_base <- merge(summary1, summary2, 
+                                 by="color")
+
+
+# tidyverse
+diamonds %>% 
+  filter(z>0, cut!="Fair") %>%
+  arrange(desc(carat)) %>%
+  select(starts_with("c"), price, x, y, z) %>%
+  mutate(mass = carat * 0.2, size = x * y * z) %>%
+  group_by(color) %>%
+  summarise(num_color = n(), price = mean(price))
+
+```
+
+##Quick plots
+```{r}
+# base
+plot(diamonds_base$carat, diamonds_base$price, col = diamonds_base$color)
+plot(diamonds_base$carat, diamonds_base$price, col = diamonds_base$clarity)
+
+plot(diamonds_base$mass, diamonds_base$size, col = diamonds_base$carat)
+
+# ggplot2
+ggplot(diamonds, aes(carat, price, col = clarity, shape = cut)) +
+    geom_point()
+ggplot(diamonds, aes(carat, price, col = color, shape = cut)) +
+    geom_point()
+
+diamonds %>% 
+  filter(z>0, cut!="Fair") %>%
+  arrange(desc(carat)) %>%
+  select(starts_with("c"), price, x, y, z) %>%
+  mutate(mass = carat * 0.2, size = x * y * z) %>%
+  group_by(color) %>%
+  ggplot(aes(mass, size, col=carat)) + geom_point()
+```
+
+Extra resources
+https://www.rstudio.com/wp-content/uploads/2015/02/data-wrangling-cheatsheet.pdf 
+https://www.rstudio.com/wp-content/uploads/2015/03/ggplot2-cheatsheet.pdf
+http://www.significantdigits.org/2017/10/switching-from-base-r-to-tidyverse/ Table of base to tidyverse function conversion
+https://rviews.rstudio.com/2017/06/08/what-is-the-tidyverse/ 
+[R for Data Science] (http://r4ds.had.co.nz/)
+
+The source for this tutorial is
+[on github](https://github.com/katkoler/base_vs_tidyverse).
