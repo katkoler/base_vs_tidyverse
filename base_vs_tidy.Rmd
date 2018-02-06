@@ -78,11 +78,15 @@ Modified from: http://www.onthelambda.com/2014/02/10/how-dplyr-replaced-my-most-
 diamonds: A dataset containing the prices and other attributes of almost 54,000 diamonds. http://ggplot2.tidyverse.org/reference/diamonds.html 
 
 ##Initial plots
-```{r}
+```{r echo=FALSE}
 library(ggplot2)
 library(tidyverse)
+```
+```{r include=FALSE}
 str(diamonds)
+```
 
+```{r}
 # base
 plot(diamonds$carat, diamonds$price, col = diamonds$color,
     pch = as.numeric(diamonds$cut))
@@ -91,10 +95,6 @@ plot(diamonds$carat, diamonds$price, col = diamonds$color,
 ggplot(diamonds, aes(carat, price, col = color, shape = cut)) +
     geom_point()
 ```
-
-
-
-
 
 
 
