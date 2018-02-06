@@ -73,18 +73,25 @@ Usually tibble displays data nicer than base R (not such a problem with notebook
 
 #Example
 Modified from: http://www.onthelambda.com/2014/02/10/how-dplyr-replaced-my-most-common-r-idioms/
+```{r}
+library(ggplot2)
+library(tidyverse)
+```
 
 ##Data
 diamonds: A dataset containing the prices and other attributes of almost 54,000 diamonds. http://ggplot2.tidyverse.org/reference/diamonds.html 
 
-##Initial plots
-```{r echo=FALSE}
-library(ggplot2)
-library(tidyverse)
-```
 ```{r include=FALSE}
 str(diamonds)
 ```
+```{r}
+head(diamonds)
+dim(diamonds)
+```
+
+##Initial plots
+
+
 
 ```{r}
 # base
